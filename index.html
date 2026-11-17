@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="fr">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="theme-color" content="#101a18">
+		<title>Onze — Football de rue</title>
+		<link rel="stylesheet" href="styme.css?v=7">
+		<script defer src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"></script>
+		<script defer src="shot-physics.js"></script>
+		<script defer src="match-stats.js"></script>
+		<script defer src="player-stamina.js"></script>
+		<script defer src="online.js"></script>
+		<script defer src="game.js"></script>
+	</head>
+	<body>
+		<main class="stadium" aria-label="Jeu de football Onze">
+			<header class="topbar">
+				<a class="wordmark" href="#" aria-label="Onze, accueil"><span class="mark">11</span>ONZE<span class="wordmark-dot">.</span></a>
+				<div class="match-score" aria-live="polite">
+					<div class="score-side"><span class="team-dot home-dot"></span><span class="team-match-mark" id="home-match-mark" hidden></span><span id="home-name">RIVAGE</span><strong id="home-score">0</strong></div>
+					<span class="score-divider">:</span>
+					<div class="score-side away-side"><strong id="away-score">0</strong><span id="away-name">ATLAS</span><span class="team-match-mark" id="away-match-mark" hidden></span><span class="team-dot away-dot"></span></div>
+					<span class="match-clock" id="match-clock">01:30</span>
+				</div>
+				<button class="icon-button pause-button" id="pause-button" type="button" aria-label="Mettre le match en pause" title="Pause (Échap)">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14" /></svg>
+				</button>
+				<button class="text-button forfeit-button" id="forfeit-button" type="button" title="Abandonner ce match" hidden>DÉCLARER FORFAIT</button>
+			</header>
+
+			<section class="pitch-wrap" aria-label="Terrain de jeu">
+				<canvas id="pitch" aria-label="Terrain de football vu du dessus"></canvas>
+				<div class="afk-warning" id="afk-warning" role="status" aria-live="assertive" hidden></div>
+				<div class="kick-charge" id="kick-charge" hidden aria-live="polite"><div><span>PUISSANCE</span><strong id="kick-charge-value">0%</strong></div><i><b id="kick-charge-fill"></b></i></div>
+				<div class="feint-cooldown" id="feint-cooldown" hidden><span>FEINTE</span><strong id="feint-cooldown-value">6</strong></div>
+				<div class="screen screen-brand" id="brand-screen" hidden>
+					<div class="brand-content">
+						<div class="brand-logo"><span>11</span><b>ONZE</b><i>.</i></div>
+						<p>CLUBS · SÉLECTIONS · COMPÉTITIONS</p>
+						<div class="brand-logos" aria-label="Clubs et sélections disponibles"><img src="1/barca.webp" alt="Barcelona"><img src="1/rm.svg" alt="Real Madrid"><img src="1/manc.webp" alt="Manchester City"><img src="1/ars.png" alt="Arsenal"><img src="1/psg.webp" alt="Paris Saint-Germain"><img src="1/mars.svg" alt="Olympique de Marseille"><img src="1/flags/france.svg" alt="France"><img src="1/flags/brazil.svg" alt="Brésil"><img src="1/flags/argentina.svg" alt="Argentine"><img src="1/flags/spain.svg" alt="Espagne"><img src="1/flags/england.svg" alt="Angleterre"><img src="1/flags/germany.svg" alt="Allemagne"><img src="1/flags/portugal.svg" alt="Portugal"><img src="1/flags/morocco.svg" alt="Maroc"></div>
+						<div class="competition-marquee brand-competition-marquee" aria-label="Ligues et coupes disponibles"><div class="competition-track"><div class="competition-set"><img src="1/lali.png" alt="LaLiga"><img src="1/pl.svg" alt="Premier League"><img src="1/ligue1.png" alt="Ligue 1"><img src="1/ldc.png" alt="Ligue des champions"><img src="1/wc.png" alt="Coupe du monde"></div><div class="competition-set" aria-hidden="true"><img src="1/lali.png" alt=""><img src="1/pl.svg" alt=""><img src="1/ligue1.png" alt=""><img src="1/ldc.png" alt=""><img src="1/wc.png" alt=""></div></div></div>
+						<div class="brand-rule"></div>
+					</div>
+				</div>
+				<div class="screen screen-menu is-visible" id="menu-screen">
+					<div class="menu-content">
+						<nav class="menu-tabs" aria-label="Menu principal">
+							<button class="menu-tab is-selected" type="button" data-menu-tab="match" aria-label="Menu match" aria-pressed="true" title="Match"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 21 8v8l-9 5-9-5V8zM3.5 8.5 12 13l8.5-4.5M12 13v8M7.5 5.5 16 10" /></svg></button>
+							<button class="menu-tab" type="button" data-menu-tab="controls" aria-label="Paramètres des touches" aria-pressed="false" title="Touches"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9h1m3 0h1m3 0h1M7 13h1m3 0h1m3 0h1M9 16h6" /></svg></button>
+							<button class="menu-tab" type="button" data-menu-tab="online" aria-label="Matchmaking en ligne" aria-pressed="false" title="En ligne"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 19v-1a6 6 0 0 1 12 0v1M16 5.5a3 3 0 0 1 0 5.8M18 14a5 5 0 0 1 3 4.5V19" /></svg></button>
+							<span class="menu-tab-label" id="menu-tab-label">MATCH</span>
+						</nav>
+						<section class="menu-match-panel" id="menu-match-panel">
+							<p class="eyebrow"><span class="live-dot"></span> TERRAIN OUVERT · MATCH RAPIDE</p>
+							<h1>Le match<br><span>est à vous.</span></h1>
+							<p class="menu-copy" id="menu-phrase">Un ballon, un terrain, et rien d’autre à prouver.</p>
+							<div class="competition-marquee menu-competition-marquee" aria-label="Clubs, sélections et compétitions"><div class="competition-track"><div class="competition-set"><img src="1/barca.webp" alt="Barcelona"><img src="1/rm.svg" alt="Real Madrid"><img src="1/manc.webp" alt="Manchester City"><img src="1/ars.png" alt="Arsenal"><img src="1/psg.webp" alt="Paris Saint-Germain"><img src="1/mars.svg" alt="Marseille"><img src="1/flags/france.svg" alt="France"><img src="1/flags/brazil.svg" alt="Brésil"><img src="1/flags/argentina.svg" alt="Argentine"><img src="1/lali.png" alt="LaLiga"><img src="1/pl.svg" alt="Premier League"><img src="1/ligue1.png" alt="Ligue 1"><img src="1/ldc.png" alt="Ligue des champions"><img src="1/wc.png" alt="Coupe du monde"></div><div class="competition-set" aria-hidden="true"><img src="1/barca.webp" alt=""><img src="1/rm.svg" alt=""><img src="1/manc.webp" alt=""><img src="1/ars.png" alt=""><img src="1/psg.webp" alt=""><img src="1/mars.svg" alt=""><img src="1/flags/france.svg" alt=""><img src="1/flags/brazil.svg" alt=""><img src="1/flags/argentina.svg" alt=""><img src="1/lali.png" alt=""><img src="1/pl.svg" alt=""><img src="1/ligue1.png" alt=""><img src="1/ldc.png" alt=""><img src="1/wc.png" alt=""></div></div></div>
+							<div class="menu-action"><button class="play-button" id="configure-button" type="button" aria-label="Préparer le match" title="Préparer le match"><span class="visually-hidden">PRÉPARER LE MATCH</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7" /></svg></button><span>PRÉPARER LE MATCH</span></div>
+							<p class="control-hint"><kbd data-key-label="up">↑</kbd><kbd data-key-label="left">←</kbd><kbd data-key-label="down">↓</kbd><kbd data-key-label="right">→</kbd> se déplacer <span>·</span> maintenir <kbd data-key-label="shoot">ESPACE</kbd> pour tirer et enrouler selon le déplacement</p>
+						</section>
+						<section class="menu-online-panel" id="menu-online-panel" hidden>
+							<p class="eyebrow"><span class="live-dot"></span> MATCHMAKING · MATCH CLASSÉ</p>
+							<h2>Joueur<br><span>en ligne.</span></h2>
+							<div class="online-fields">
+								<label for="online-name">PSEUDO<input id="online-name" type="text" minlength="3" maxlength="16" autocomplete="username" placeholder="Ton pseudo" required></label>
+								<label for="online-password">MOT DE PASSE<input id="online-password" type="password" minlength="10" maxlength="128" autocomplete="current-password" placeholder="10 caractères minimum" required></label>
+								<label class="online-team-field" for="online-team">MON ÉQUIPE<select id="online-team"><option value="barcelona">FC Barcelona</option><option value="real-madrid">Real Madrid</option><option value="man-city">Manchester City</option><option value="arsenal">Arsenal</option><option value="psg">Paris Saint-Germain</option><option value="marseille">Olympique de Marseille</option><option value="nation-france">France</option><option value="nation-spain">Espagne</option><option value="nation-england">Angleterre</option><option value="nation-germany">Allemagne</option><option value="nation-argentina">Argentine</option><option value="nation-brazil">Brésil</option><option value="nation-portugal">Portugal</option><option value="nation-morocco">Maroc</option></select></label>
+							</div>
+							<div class="online-auth-actions"><button class="text-button" id="online-register-button" type="button">CRÉER UN COMPTE</button><button class="text-button" id="online-login-button" type="button">SE CONNECTER</button></div>
+							<div class="online-stats" aria-label="Statistiques en ligne">
+								<div><strong id="online-rating">1000</strong><small>ELO</small></div>
+								<div><strong id="online-played">0</strong><small>MATCHS</small></div>
+								<div><strong id="online-wins">0</strong><small>VICTOIRES</small></div>
+								<div><strong id="online-goals">0</strong><small>BUTS</small></div>
+								<div><strong id="online-win-rate">0%</strong><small>WINRATE</small></div>
+							</div>
+							<button class="play-button online-queue-button" id="online-queue-button" type="button"><span>TROUVER UN MATCH</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7" /></svg></button>
+							<button class="text-button online-cancel-button" id="online-cancel-button" type="button" hidden>ANNULER LA RECHERCHE</button>
+							<p class="online-status" id="online-status" aria-live="polite">Connexion au serveur en ligne…</p>
+						</section>
+						<section class="menu-controls-panel" id="menu-controls-panel" hidden>
+							<p class="eyebrow">COMMANDES PERSONNALISÉES</p><h2>À votre<br><span>main.</span></h2>
+							<div class="key-bindings" aria-label="Paramètres des touches">
+								<div><span>Avancer</span><button type="button" data-bind-action="up">↑</button></div><div><span>Reculer</span><button type="button" data-bind-action="down">↓</button></div>
+								<div><span>Gauche</span><button type="button" data-bind-action="left">←</button></div><div><span>Droite</span><button type="button" data-bind-action="right">→</button></div>
+								<div><span>Tirer</span><button type="button" data-bind-action="shoot">ESPACE</button></div>
+								<div><span>Feinte</span><button type="button" data-bind-action="feint">F</button></div><div><span>Ralentir</span><button type="button" data-bind-action="slow">B</button></div>
+							</div>
+							<p class="binding-hint" id="binding-hint" aria-live="polite">Sélectionnez une touche pour la modifier.</p>
+							<p class="eyebrow controls-player-heading">COMMANDES JOUEUR 2</p>
+							<div class="key-bindings">
+								<div><span>Avancer</span><button type="button" data-bind-action="up" data-bind-player="2">W</button></div><div><span>Reculer</span><button type="button" data-bind-action="down" data-bind-player="2">S</button></div>
+								<div><span>Gauche</span><button type="button" data-bind-action="left" data-bind-player="2">A</button></div><div><span>Droite</span><button type="button" data-bind-action="right" data-bind-player="2">D</button></div>
+								<div><span>Tirer</span><button type="button" data-bind-action="shoot" data-bind-player="2">ENTRÉE</button></div>
+								<div><span>Feinte</span><button type="button" data-bind-action="feint" data-bind-player="2">M</button></div><div><span>Ralentir</span><button type="button" data-bind-action="slow" data-bind-player="2">P</button></div>
+							</div>
+						</section>
+					</div>
+					<div class="menu-index"><span>01</span><i></i><span>LE COUP D’ENVOI</span></div>
+				</div>
+
+				<div class="screen screen-config" id="config-screen" hidden>
+					<img class="selection-backdrop" id="selection-backdrop" alt="" aria-hidden="true" hidden>
+					<div class="config-panel">
+						<div class="config-heading"><p class="eyebrow" id="config-step-label">AVANT-MATCH · 01 / 05</p><h2 id="config-title">Équipes<br><span>du match.</span></h2></div>
+						<div class="config-step is-active" data-config-step="0"><div class="club-selection">
+							<div class="club-field"><label class="setup-label" for="home-club">MON ÉQUIPE</label><div class="club-control"><button type="button" data-club-cycle="home" data-direction="-1" aria-label="Équipe précédente">‹</button><div class="club-select-wrap"><img id="home-club-crest" src="1/barca.webp" alt=""><img class="club-flag" id="home-club-flag" src="1/flags/france.svg" alt="Drapeau" hidden><select id="home-club" aria-label="Choisir mon équipe"><optgroup label="Clubs"><option value="barcelona">FC Barcelona</option><option value="real-madrid">Real Madrid</option><option value="man-city">Manchester City</option><option value="arsenal">Arsenal</option><option value="psg">Paris Saint-Germain</option><option value="marseille">Olympique de Marseille</option></optgroup><optgroup label="Sélections nationales"><option value="nation-france">France</option><option value="nation-spain">Espagne</option><option value="nation-england">Angleterre</option><option value="nation-germany">Allemagne</option><option value="nation-argentina">Argentine</option><option value="nation-brazil">Brésil</option><option value="nation-portugal">Portugal</option><option value="nation-morocco">Maroc</option></optgroup></select></div><button type="button" data-club-cycle="home" data-direction="1" aria-label="Équipe suivante">›</button></div></div>
+							<span class="versus-mark">VS</span>
+							<div class="club-field"><label class="setup-label" for="away-club">ADVERSAIRE</label><div class="club-control"><button type="button" data-club-cycle="away" data-direction="-1" aria-label="Adversaire précédent">‹</button><div class="club-select-wrap"><img id="away-club-crest" src="1/rm.svg" alt=""><img class="club-flag" id="away-club-flag" src="1/flags/brazil.svg" alt="Drapeau" hidden><select id="away-club" aria-label="Choisir l’adversaire"><optgroup label="Clubs"><option value="real-madrid">Real Madrid</option><option value="barcelona">FC Barcelona</option><option value="man-city">Manchester City</option><option value="arsenal">Arsenal</option><option value="psg">Paris Saint-Germain</option><option value="marseille">Olympique de Marseille</option></optgroup><optgroup label="Sélections nationales"><option value="nation-france">France</option><option value="nation-spain">Espagne</option><option value="nation-england">Angleterre</option><option value="nation-germany">Allemagne</option><option value="nation-argentina">Argentine</option><option value="nation-brazil">Brésil</option><option value="nation-portugal">Portugal</option><option value="nation-morocco">Maroc</option></optgroup></select></div><button type="button" data-club-cycle="away" data-direction="1" aria-label="Adversaire suivant">›</button></div></div>
+							<div class="competition-field"><span class="setup-label">LIGUE AUTOMATIQUE</span><strong id="competition-auto">LALIGA</strong></div>
+							<div class="mode-picker" data-config-step="0" role="group" aria-label="Mode de jeu"><button class="is-selected" type="button" data-game-mode="match" aria-pressed="true">MATCH</button><button type="button" data-game-mode="training" aria-pressed="false">ENTRAÎNEMENT</button><button type="button" data-game-mode="duel" aria-pressed="false">DUEL 1V1</button></div>
+						</div></div>
+						<div class="config-step" data-config-step="1"><span class="setup-label">DURÉE DU MATCH</span><div class="duration-picker" role="group" aria-label="Durée du match"><button type="button" data-duration="90" class="duration-choice is-selected" aria-pressed="true">90 sec</button><button type="button" data-duration="180" aria-pressed="false" class="duration-choice">3 min</button></div></div>
+						<div class="config-step" data-config-step="2"><span class="setup-label">NIVEAU DU BOT</span><div class="difficulty-picker" role="group" aria-label="Niveau de difficulté du bot"><button type="button" data-difficulty="easy" aria-pressed="false">FACILE</button><button type="button" data-difficulty="normal" aria-pressed="false">NORMAL</button><button type="button" data-difficulty="hard" class="is-selected" aria-pressed="true">FORT</button></div></div>
+						<div class="config-step" data-config-step="3"><label class="setup-label" for="player-speed">VITESSE DU JOUEUR <strong id="speed-value">x1.0</strong></label><input id="player-speed" type="range" min="60" max="500" step="20" value="100" aria-label="Vitesse du joueur"></div>
+						<div class="config-step" data-config-step="4"><div class="match-settings-grid"><div class="match-setting"><span class="setup-label">MÉTÉO DU MATCH</span><div class="weather-picker" role="group" aria-label="Météo du match"><button class="is-selected" type="button" data-weather="clear" aria-pressed="true">DÉGAGÉ</button><button type="button" data-weather="rain" aria-pressed="false">PLUIE</button><button type="button" data-weather="snow" aria-pressed="false">NEIGE</button></div></div><label class="toggle-setting" for="training-goal-reset-toggle"><span><b>REMISE AU CENTRE · ENTRAÎNEMENT</b><small>Replacer le ballon au centre après un but</small></span><input id="training-goal-reset-toggle" type="checkbox" checked><i aria-hidden="true"></i></label><label class="toggle-setting" for="cooling-break-toggle"><span><b>PAUSE FRAÎCHEUR</b><small>Deux arrêts boisson pendant le match</small></span><input id="cooling-break-toggle" type="checkbox" checked><i aria-hidden="true"></i></label></div></div>
+						<div class="config-footer"><button class="text-button" id="config-back" type="button">RETOUR</button><div class="config-progress" id="config-progress" aria-label="Étapes de configuration"><i class="is-current"></i><i></i><i></i><i></i><i></i></div><button class="play-button" id="config-next" type="button"><span>CONTINUER</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7" /></svg></button></div>
+					</div>
+				</div>
+
+				<div class="screen screen-intro" id="intro-screen" hidden>
+					<div class="intro-content">
+						<p class="eyebrow intro-competition"><img id="intro-competition-mark" src="1/lali.png" alt=""><span id="intro-competition">LALIGA</span></p>
+						<div class="intro-teams"><div class="intro-team" id="intro-home"><img src="1/barca.webp" alt=""><span>FC BARCELONA</span></div><div class="intro-vs">VS</div><div class="intro-team" id="intro-away"><img src="1/rm.svg" alt=""><span>REAL MADRID</span></div></div>
+						<p class="intro-details" id="intro-details">PRÉSENTATION DES ÉQUIPES</p>
+						<button class="skip-button" id="skip-intro" type="button" hidden>PASSER <span>››</span></button>
+					</div>
+				</div>
+
+				<div class="screen screen-competition-reveal" id="competition-reveal-screen" hidden>
+					<div class="competition-reveal-content"><p class="eyebrow">COMPÉTITION DU MATCH</p><img id="competition-reveal-logo" src="1/lali.png" alt=""><h2 id="competition-reveal-name">LALIGA</h2></div>
+				</div>
+				<div class="screen screen-kickoff" id="kickoff-countdown-screen" hidden aria-live="assertive"><div class="kickoff-countdown-content"><p class="eyebrow">COUP D’ENVOI DANS</p><p class="kickoff-score" id="kickoff-score">0 — 0</p><p class="kickoff-scorers" id="kickoff-scorers"></p><p class="kickoff-directions" id="kickoff-directions"></p><strong id="kickoff-countdown">3</strong></div></div>
+				<div class="screen screen-kickoff" id="match-countdown-screen" hidden aria-live="assertive"><div class="kickoff-countdown-content"><p class="eyebrow" id="match-countdown-label">FIN DU MATCH DANS</p><strong id="match-countdown">10</strong></div></div>
+				<div class="screen screen-loading" id="loading-screen" hidden aria-live="polite"><div class="loading-content"><p class="eyebrow">AVANT LE COUP D’ENVOI</p><img id="loading-image" src="1/1/ligue1matchloading.jpeg" alt=""><h2 id="loading-title">LE STADE SE PRÉPARE</h2><p id="loading-caption">LIGUE 1 · PARIS SAINT-GERMAIN — MARSEILLE</p><div class="loading-progress"><i></i></div></div></div>
+				<div class="screen screen-foul" id="foul-screen" hidden aria-live="assertive"><div class="foul-content"><img id="foul-team-mark" src="1/barca.webp" alt="Équipe fautive"><p class="eyebrow">COUP DE SIFFLET</p><h2>TIRAGE<br><span>DE MAILLOT</span></h2><p id="foul-detail">FAUTE · COUP FRANC</p><strong id="foul-countdown">3</strong></div></div>
+				<div class="screen screen-freekick" id="freekick-screen" hidden><div class="freekick-banner"><b>COUP FRANC</b><span>AVANCE OU FRAPPE POUR REPRENDRE</span></div></div>
+
+				<div class="screen screen-pause" id="pause-screen" hidden>
+					<div class="dialog-content">
+						<p class="eyebrow" id="pause-eyebrow">MATCH EN PAUSE</p>
+						<h2 id="pause-title">On reprend<br><span>quand vous voulez.</span></h2>
+						<p class="halftime-score event-reveal" id="halftime-score"><span id="halftime-home">RIVAGE</span><strong id="halftime-result">0 — 0</strong><span id="halftime-away">ATLAS</span></p>
+						<p class="halftime-scorers event-reveal" id="halftime-scorers"></p>
+						<p class="halftime-sides event-reveal" id="halftime-sides">LES ÉQUIPES ÉCHANGENT LEURS CÔTÉS</p>
+						<p class="event-countdown" id="halftime-countdown" aria-live="polite">LA REPRISE ATTEND VOTRE SIGNAL</p>
+						<div class="halftime-actions event-reveal" id="halftime-actions">
+							<button class="play-button" id="resume-button" type="button"><span id="resume-label">JOUER LA 2E MI-TEMPS</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 12 7-12 7z" /></svg></button>
+							<button class="text-button" id="restart-button" type="button">RELANCER LE MATCH <span>↻</span></button>
+							<button class="text-button" id="home-button" type="button">QUITTER LE MATCH <span>↗</span></button>
+						</div>
+					</div>
+				</div>
+
+				<div class="screen screen-goal" id="goal-screen" hidden aria-live="assertive">
+					<div class="goal-content">
+						<p class="eyebrow">LE STADE EXPLOSE</p>
+						<div class="goal-team-mark" id="goal-team-mark"></div>
+						<h2 id="goal-title">BUUUT !</h2>
+						<p class="goal-team" id="goal-team">RIVAGE</p>
+						<p class="goal-score" id="goal-score">0 — 0</p>
+						<p class="goal-countdown" id="goal-countdown">REPRISE DU MATCH DANS <strong>3</strong>s</p>
+						<button class="skip-button skip-goal-button" type="button" data-skip-goal>PASSER <span>››</span></button>
+					</div>
+				</div>
+
+				<div class="screen screen-crowd-cheer" id="crowd-cheer-screen" hidden aria-live="assertive">
+					<div class="crowd-cheer-message"><span>LES TRIBUNES S’ENFLAMMENT</span></div>
+				</div>
+
+				<div class="screen screen-cooling" id="cooling-screen" hidden aria-live="assertive">
+					<div class="cooling-content">
+						<p class="eyebrow">PAUSE FRAÎCHEUR</p>
+						<h2>On s’hydrate.<br><span>Le match reprend dans</span></h2>
+						<p class="cooling-countdown" id="cooling-countdown"><strong>4</strong>s</p>
+					</div>
+				</div>
+
+				<div class="screen screen-result" id="result-screen" hidden>
+					<div class="dialog-content">
+						<p class="eyebrow">COUP DE SIFFLET</p>
+						<h2 id="result-title">Bien joué.</h2>
+						<div class="result-teams"><div class="result-team" id="result-home-team"></div><p class="result-score" id="result-score">0 — 0</p><div class="result-team" id="result-away-team"></div></div>
+						<table class="match-stats-table" id="match-stats" aria-label="Statistiques du match">
+							<thead><tr><th scope="col">STATISTIQUE</th><th scope="col" id="stats-home-name">DOMICILE</th><th scope="col" id="stats-away-name">EXTÉRIEUR</th></tr></thead>
+							<tbody>
+								<tr><th scope="row">Buts</th><td id="stats-home-goals">0</td><td id="stats-away-goals">0</td></tr>
+								<tr><th scope="row">Touches de balle</th><td id="stats-home-touches">0</td><td id="stats-away-touches">0</td></tr>
+								<tr><th scope="row">Récupérations</th><td id="stats-home-recoveries">0</td><td id="stats-away-recoveries">0</td></tr>
+								<tr><th scope="row">Dribbles</th><td id="stats-home-dribbles">0</td><td id="stats-away-dribbles">0</td></tr>
+								<tr><th scope="row">Possession</th><td id="stats-home-possession">0 %</td><td id="stats-away-possession">0 %</td></tr>
+								<tr><th scope="row">Temps avec le ballon</th><td id="stats-home-time">00:00</td><td id="stats-away-time">00:00</td></tr>
+								<tr><th scope="row">Possession moyenne</th><td id="stats-home-average">00:00</td><td id="stats-away-average">00:00</td></tr>
+								<tr><th scope="row">Tirs / cadrés</th><td id="stats-home-shots">0 / 0</td><td id="stats-away-shots">0 / 0</td></tr>
+								<tr><th scope="row">Précision</th><td id="stats-home-accuracy">0 %</td><td id="stats-away-accuracy">0 %</td></tr>
+								<tr><th scope="row">Efficacité</th><td id="stats-home-efficiency">0 %</td><td id="stats-away-efficiency">0 %</td></tr>
+								<tr><th scope="row">Fautes</th><td id="stats-home-fouls">0</td><td id="stats-away-fouls">0</td></tr>
+			</tbody>
+						</table>
+						<p class="online-match-stats-note" id="online-match-stats-note" hidden>STATS DÉTAILLÉES NON DISPONIBLES POUR CE MATCH EN LIGNE</p>
+						<p class="online-result-delta" id="online-result-delta" hidden></p>
+						<button class="play-button" id="rematch-button" type="button"><span>REJOUER</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7" /></svg></button>
+						<button class="text-button" id="result-home-button" type="button">MENU PRINCIPAL <span>↗</span></button>
+					</div>
+				</div>
+
+				<div class="mobile-controls" aria-label="Commandes tactiles">
+					<div class="direction-pad">
+						<button type="button" data-key="up" aria-label="Avancer">↑</button>
+						<button type="button" data-key="left" aria-label="Aller à gauche">←</button>
+						<button type="button" data-key="down" aria-label="Reculer">↓</button>
+						<button type="button" data-key="right" aria-label="Aller à droite">→</button>
+					</div>
+					<button type="button" class="mobile-shoot" id="mobile-shoot" aria-label="Maintenir pour tirer"><span>FRAPPE</span><i>↗</i></button>
+				</div>
+				<div class="pitch-caption"><span>STADE DES DOCKS</span><span><b id="pitch-competition-label">LALIGA</b> · DUEL SANS GARDIENS</span></div>
+			</section>
+
+			<footer class="bottom-bar">
+				<span class="match-status"><span class="status-pip" id="status-pip"></span><span id="match-status">EN ATTENTE DU COUP D’ENVOI</span></span>
+				<span class="bottom-note">JOUEZ FRANC. JOUEZ JUSQU’AU BOUT.</span>
+				<span class="bottom-shortcut">ONZE<span>®</span> <b>·</b> 2026</span>
+			</footer>
+		</main>
+	</body>
+</html>

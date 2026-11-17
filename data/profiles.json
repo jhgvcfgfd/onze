@@ -1,0 +1,86 @@
+{
+  "c1ed2814-37b7-42d0-b8cc-aa4eb73e0e89": {
+    "id": "c1ed2814-37b7-42d0-b8cc-aa4eb73e0e89",
+    "name": "Joueur B",
+    "teamId": "real-madrid",
+    "rating": 1000,
+    "played": 0,
+    "wins": 0,
+    "losses": 0,
+    "draws": 0,
+    "goals": 0,
+    "goalsAgainst": 0
+  },
+  "d9a66c0c-c4f8-44c6-bd7a-5792454ba338": {
+    "id": "d9a66c0c-c4f8-44c6-bd7a-5792454ba338",
+    "name": "Joueur C",
+    "teamId": "man-city",
+    "rating": 1000,
+    "played": 0,
+    "wins": 0,
+    "losses": 0,
+    "draws": 0,
+    "goals": 0,
+    "goalsAgainst": 0
+  },
+  "9a9016bc-8a01-4180-83cd-a1fabf2b64be": {
+    "id": "9a9016bc-8a01-4180-83cd-a1fabf2b64be",
+    "name": "Athlète A",
+    "teamId": "man-city",
+    "rating": 1000,
+    "played": 0,
+    "wins": 0,
+    "losses": 0,
+    "draws": 0,
+    "goals": 0,
+    "goalsAgainst": 0
+  },
+  "7b11f88f-d45a-4b8a-a970-a2bfdac76a4b": {
+    "id": "7b11f88f-d45a-4b8a-a970-a2bfdac76a4b",
+    "name": "Athlète B",
+    "teamId": "psg",
+    "rating": 1000,
+    "played": 0,
+    "wins": 0,
+    "losses": 0,
+    "draws": 0,
+    "goals": 0,
+    "goalsAgainst": 0
+  },
+  "38cb3413-eb21-4d27-b913-a2dcfccd230b": {
+    "id": "38cb3413-eb21-4d27-b913-a2dcfccd230b",
+    "name": "Joueur C",
+    "teamId": "man-city",
+    "rating": 1000,
+    "played": 0,
+    "wins": 0,
+    "losses": 0,
+    "draws": 0,
+    "goals": 0,
+    "goalsAgainst": 0
+  },
+  "ba6fa1ff-756a-4911-a880-dd337a99a158": {
+    "id": "ba6fa1ff-756a-4911-a880-dd337a99a158",
+    "name": "Joueur D",
+    "teamId": "psg",
+    "rating": 1000,
+    "played": 0,
+    "wins": 0,
+    "losses": 0,
+    "draws": 0,
+    "goals": 0,
+    "goalsAgainst": 0
+  },
+  "458b7c4e-a7ca-4743-b462-be52a6844e15": {
+    "id": "458b7c4e-a7ca-4743-b462-be52a6844e15",
+    "name": "Mamadou",
+    "teamId": "barcelona",
+    "rating": 1000,
+    "played": 0,
+    "wins": 0,
+    "losses": 0,
+    "draws": 0,
+    "goals": 0,
+    "goalsAgainst": 0
+  }
+}

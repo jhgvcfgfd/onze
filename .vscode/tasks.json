@@ -1,0 +1,19 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Test local — Onze",
+			"type": "shell",
+			"command": "python3 -m http.server 8765",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Online — Onze",
+			"type": "shell",
+			"command": "npm start",
+			"isBackground": true,
+			"problemMatcher": []
+		}
+	]
+}

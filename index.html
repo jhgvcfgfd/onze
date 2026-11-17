@@ -9,6 +9,7 @@
 		<script defer src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"></script>
 		<script defer src="shot-physics.js"></script>
 		<script defer src="match-stats.js"></script>
+		<script defer src="ranks.js"></script>
 		<script defer src="player-stamina.js"></script>
 		<script defer src="online.js"></script>
 		<script defer src="game.js"></script>
@@ -49,6 +50,7 @@
 							<button class="menu-tab is-selected" type="button" data-menu-tab="match" aria-label="Menu match" aria-pressed="true" title="Match"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 21 8v8l-9 5-9-5V8zM3.5 8.5 12 13l8.5-4.5M12 13v8M7.5 5.5 16 10" /></svg></button>
 							<button class="menu-tab" type="button" data-menu-tab="controls" aria-label="Paramètres des touches" aria-pressed="false" title="Touches"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9h1m3 0h1m3 0h1M7 13h1m3 0h1m3 0h1M9 16h6" /></svg></button>
 							<button class="menu-tab" type="button" data-menu-tab="online" aria-label="Matchmaking en ligne" aria-pressed="false" title="En ligne"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 19v-1a6 6 0 0 1 12 0v1M16 5.5a3 3 0 0 1 0 5.8M18 14a5 5 0 0 1 3 4.5V19" /></svg></button>
+							<button class="menu-tab" type="button" data-menu-tab="leaderboard" aria-label="Classement des joueurs" aria-pressed="false" title="Classement"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9h4v10M10 19V5h4v14M16 19v-7h4v7M2 21h20" /></svg></button>
 							<span class="menu-tab-label" id="menu-tab-label">MATCH</span>
 						</nav>
 						<section class="menu-match-panel" id="menu-match-panel">
@@ -78,6 +80,14 @@
 							<button class="play-button online-queue-button" id="online-queue-button" type="button"><span>TROUVER UN MATCH</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7" /></svg></button>
 							<button class="text-button online-cancel-button" id="online-cancel-button" type="button" hidden>ANNULER LA RECHERCHE</button>
 							<p class="online-status" id="online-status" aria-live="polite">Connexion au serveur en ligne…</p>
+						</section>
+						<section class="menu-leaderboard-panel" id="menu-leaderboard-panel" hidden>
+							<div class="leaderboard-heading"><div><p class="eyebrow"><span class="live-dot"></span> ONZE · SAISON CLASSÉE</p><h2>Les meilleurs<br><span>joueurs.</span></h2></div><span class="leaderboard-count" id="leaderboard-count">0 JOUEURS</span></div>
+							<p class="leaderboard-status" id="leaderboard-status" aria-live="polite">Chargement du classement…</p>
+							<div class="leaderboard-layout">
+								<ol class="leaderboard-list" id="leaderboard-list" aria-label="Classement des joueurs"></ol>
+								<aside class="player-card" id="player-card" aria-live="polite"><p class="eyebrow">FICHE JOUEUR</p><div class="player-card-empty">Sélectionne un joueur pour voir ses statistiques.</div></aside>
+							</div>
 						</section>
 						<section class="menu-controls-panel" id="menu-controls-panel" hidden>
 							<p class="eyebrow">COMMANDES PERSONNALISÉES</p><h2>À votre<br><span>main.</span></h2>

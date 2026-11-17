@@ -91,6 +91,17 @@ test("accounts, authoritative match results, forfeits, disconnects, and AFK", { 
 	const home = await connectAccount(url, "Joueur A", "barcelona");
 	const away = await connectAccount(url, "Joueur B", "real-madrid");
 	const third = await connectAccount(url, "Joueur C", "psg");
+	const boardResponse = await fetch(`http://127.0.0.1:${port}/api/leaderboard`);
+	assert.equal(boardResponse.status, 200);
+	const leaderboard = await boardResponse.json();
+	assert.equal(leaderboard.length, 3);
+	assert.ok(leaderboard.every((profile) => profile.rank.label === "Bronze I"));
+	assert.equal(leaderboard[0].passwordHash, undefined);
+	assert.equal(leaderboard[0].sessions, undefined);
+	const playerResponse = await fetch(`http://127.0.0.1:${port}/api/players/${home.profile.id}`);
+	assert.equal(playerResponse.status, 200);
+	assert.equal((await playerResponse.json()).name, "Joueur A");
+	assert.equal((await fetch(`http://127.0.0.1:${port}/api/players/unknown`)).status, 404);
 	const clients = [unauthenticated, home, away, third];
 	t.after(async () => {
 		for (const socket of clients) if (socket.readyState === WebSocket.OPEN) socket.close();

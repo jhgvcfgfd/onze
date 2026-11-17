@@ -4,6 +4,7 @@ const path = require("node:path");
 const { randomUUID } = require("node:crypto");
 const { WebSocketServer, WebSocket } = require("ws");
 const { calculateElo } = require("./elo");
+const { getRank } = require("./ranks");
 const { authenticate, publicProfile: sanitizeProfile, registerAccount, resumeSession, validTeams } = require("./auth");
 const { createMatch, matchDuration, setInput, snapshot, tickMatch } = require("./match-engine");
 
@@ -24,7 +25,7 @@ const contentTypes = {
 	".json": "application/json; charset=utf-8", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
 	".webp": "image/webp", ".avif": "image/avif", ".celeb": "image/avif", ".svg": "image/svg+xml", ".woff2": "font/woff2",
 };
-const publicRoots = new Set(["index.html", "game.js", "online.js", "match-stats.js", "player-stamina.js", "shot-physics.js", "styme.css", "1"]);
+const publicRoots = new Set(["index.html", "game.js", "online.js", "ranks.js", "match-stats.js", "player-stamina.js", "shot-physics.js", "styme.css", "1"]);
 let profiles = loadProfiles();
 const queue = [];
 const rooms = new Map();
@@ -46,7 +47,7 @@ function persistProfiles() {
 }
 
 function publicProfile(profile) {
-	return { ...sanitizeProfile(profile), teamName: teams[profile.teamId] || teams.barcelona };
+	return { ...sanitizeProfile(profile), teamName: teams[profile.teamId] || teams.barcelona, rank: getRank(profile.rating) };
 }
 
 function send(socket, message) {
@@ -146,6 +147,26 @@ const server = http.createServer((request, response) => {
 		pathname = decodeURIComponent(new URL(request.url, "http://localhost").pathname);
 	} catch {
 		response.writeHead(400).end("Bad request");
+		return;
+	}
+	if (pathname === "/api/leaderboard") {
+		const leaderboard = Object.values(profiles)
+			.sort((first, second) => second.rating - first.rating || second.wins - first.wins || first.name.localeCompare(second.name, "fr"))
+			.slice(0, 100)
+			.map(publicProfile);
+		response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
+		response.end(JSON.stringify(leaderboard));
+		return;
+	}
+	const playerMatch = pathname.match(/^\/api\/players\/([^/]+)$/);
+	if (playerMatch) {
+		const profile = Object.values(profiles).find((player) => player.id === playerMatch[1]);
+		if (!profile) {
+			response.writeHead(404, { "Content-Type": "application/json; charset=utf-8" }).end(JSON.stringify({ error: "Joueur introuvable." }));
+			return;
+		}
+		response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
+		response.end(JSON.stringify(publicProfile(profile)));
 		return;
 	}
 	const targetPath = path.resolve(root, pathname === "/" ? "index.html" : `.${pathname}`);

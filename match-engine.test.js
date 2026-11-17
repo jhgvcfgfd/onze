@@ -14,6 +14,15 @@ test("server simulation moves players from validated input", () => {
 	assert.ok(snapshot(match).home.x > before.x);
 });
 
+test("online players run at three times the base speed", () => {
+	const match = createMatch();
+	setInput(match, "home", { x: 1 });
+	for (let index = 0; index < 60; index += 1) tickMatch(match);
+	const speed = Math.hypot(snapshot(match).home.vx, snapshot(match).home.vy);
+	assert.ok(speed > 3.5, `Expected boosted online speed above 3.5, got ${speed}`);
+	assert.ok(speed <= 8.1 * 3 * 1.2, `Expected online speed capped at 29.16, got ${speed}`);
+});
+
 test("a free ball slows progressively from air friction", () => {
 	const match = createMatch();
 	Body.setPosition(match.ball, { x: 600, y: 120 });

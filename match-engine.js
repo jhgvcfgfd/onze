@@ -4,6 +4,7 @@ const shotPhysics = require("./shot-physics");
 const playerStamina = require("./player-stamina");
 
 const worldWidth = 1200;
+const onlinePlayerSpeedMultiplier = 3.0;
 const field = { left: 80, right: 1120, top: 70, bottom: 650 };
 const goal = { top: 285, bottom: 435 };
 const matchDuration = 90;
@@ -163,8 +164,8 @@ function tickMatch(match, delta = 1 / 60) {
 		match.stamina[side] = playerStamina.updateStamina(match.stamina[side], movement.moving, delta);
 		const multiplier = (input.slow ? 0.68 : 1) * playerStamina.getSpeedMultiplier(match.stamina[side]);
 		if (movement.moving) {
-			Body.applyForce(player, player.position, { x: movement.x * 0.0025 * multiplier, y: movement.y * 0.0025 * multiplier });
-			limitSpeed(player, 8.1 * multiplier);
+			Body.applyForce(player, player.position, { x: movement.x * 0.0025 * onlinePlayerSpeedMultiplier * multiplier, y: movement.y * 0.0025 * onlinePlayerSpeedMultiplier * multiplier });
+			limitSpeed(player, 8.1 * onlinePlayerSpeedMultiplier * multiplier);
 		}
 	}
 

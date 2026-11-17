@@ -17,6 +17,10 @@
 	let isQueued = false;
 	let isInMatch = false;
 	let isAuthenticated = false;
+	const leaderboardList = document.querySelector("#leaderboard-list");
+	const leaderboardStatus = document.querySelector("#leaderboard-status");
+	const leaderboardCount = document.querySelector("#leaderboard-count");
+	const playerCard = document.querySelector("#player-card");
 
 	fields.name.value = storedProfile?.name || "";
 	fields.team.value = storedProfile?.teamId || "barcelona";
@@ -52,6 +56,124 @@
 			"online-win-rate": `${profile.winRate ?? 0}%`,
 		};
 		for (const [id, value] of Object.entries(values)) document.querySelector(`#${id}`).textContent = String(value);
+	}
+
+	function addText(parent, tag, className, value) {
+		const element = document.createElement(tag);
+		if (className) element.className = className;
+		element.textContent = String(value);
+		parent.append(element);
+		return element;
+	}
+
+	function makeRankBadge(rank, compact = false) {
+		const badge = document.createElement("span");
+		badge.className = `rank-badge rank-${rank.tier.toLowerCase()}${compact ? " is-compact" : ""}`;
+		badge.textContent = rank.tier === "Masters" ? "M" : rank.tier.slice(0, 1);
+		badge.setAttribute("aria-hidden", "true");
+		return badge;
+	}
+
+	function showPlayerCard(profile) {
+		const rank = profile.rank || window.onzeRanks.getRank(profile.rating);
+		playerCard.replaceChildren();
+		addText(playerCard, "p", "eyebrow", "FICHE JOUEUR");
+		const identity = document.createElement("div");
+		identity.className = "player-card-identity";
+		identity.append(makeRankBadge(rank));
+		const name = document.createElement("div");
+		addText(name, "h3", "", profile.name);
+		addText(name, "p", "player-team", profile.teamName || "Équipe inconnue");
+		identity.append(name);
+		playerCard.append(identity);
+		addText(playerCard, "p", "player-rank-label", rank.label);
+		const progress = document.createElement("div");
+		progress.className = "rank-progress";
+		progress.setAttribute("role", "progressbar");
+		progress.setAttribute("aria-label", `Progression vers le rang suivant : ${rank.progress} %`);
+		progress.setAttribute("aria-valuemin", "0");
+		progress.setAttribute("aria-valuemax", "100");
+		progress.setAttribute("aria-valuenow", String(rank.progress));
+		const progressFill = document.createElement("span");
+		progressFill.style.width = `${rank.progress}%`;
+		progress.append(progressFill);
+		playerCard.append(progress);
+		addText(playerCard, "p", "rank-points", `${rank.points} POINTS DE RANG · ELO ${profile.rating}`);
+		const stats = document.createElement("dl");
+		stats.className = "player-stat-grid";
+		const values = [
+			["Matchs", profile.played], ["Victoires", profile.wins], ["Nuls", profile.draws], ["Défaites", profile.losses],
+			["Taux de victoire", `${profile.winRate ?? 0}%`], ["Buts marqués", profile.goals], ["Buts encaissés", profile.goalsAgainst],
+			["Différence de buts", (profile.goals || 0) - (profile.goalsAgainst || 0)],
+		];
+		for (const [label, value] of values) {
+			const item = document.createElement("div");
+			addText(item, "dt", "", label);
+			addText(item, "dd", "", value ?? 0);
+			stats.append(item);
+		}
+		playerCard.append(stats);
+	}
+
+	async function selectLeaderboardPlayer(playerId, button) {
+		leaderboardList.querySelectorAll("button").forEach((row) => {
+			row.classList.toggle("is-selected", row === button);
+			row.setAttribute("aria-pressed", String(row === button));
+		});
+		playerCard.replaceChildren();
+		addText(playerCard, "p", "eyebrow", "FICHE JOUEUR");
+		addText(playerCard, "p", "player-card-empty", "Chargement des statistiques…");
+		try {
+			const response = await fetch(`/api/players/${encodeURIComponent(playerId)}`);
+			if (!response.ok) throw new Error("Fiche joueur indisponible.");
+			showPlayerCard(await response.json());
+		} catch (error) {
+			playerCard.replaceChildren();
+			addText(playerCard, "p", "eyebrow", "FICHE JOUEUR");
+			addText(playerCard, "p", "player-card-empty", error.message || "Impossible de charger la fiche.");
+		}
+	}
+
+	async function loadLeaderboard() {
+		leaderboardStatus.textContent = "Chargement du classement…";
+		try {
+			const response = await fetch("/api/leaderboard");
+			if (!response.ok) throw new Error("Classement indisponible.");
+			const players = await response.json();
+			leaderboardList.replaceChildren();
+			leaderboardCount.textContent = `${players.length} JOUEUR${players.length === 1 ? "" : "S"}`;
+			if (!players.length) {
+				leaderboardStatus.textContent = "Aucun joueur classé pour le moment.";
+				playerCard.replaceChildren();
+				addText(playerCard, "p", "eyebrow", "FICHE JOUEUR");
+				addText(playerCard, "p", "player-card-empty", "Les premières fiches apparaîtront après la création d’un compte.");
+				return;
+			}
+			leaderboardStatus.textContent = "Sélectionne un joueur pour consulter son rang et ses statistiques.";
+			let selectedButton = null;
+			players.forEach((profile, index) => {
+				const item = document.createElement("li");
+				const button = document.createElement("button");
+				button.type = "button";
+				button.className = "leaderboard-player";
+				button.setAttribute("aria-pressed", "false");
+				addText(button, "span", "leaderboard-position", String(index + 1).padStart(2, "0"));
+				button.append(makeRankBadge(profile.rank, true));
+				const details = document.createElement("span");
+				details.className = "leaderboard-player-details";
+				addText(details, "strong", "", profile.name);
+				addText(details, "small", "", `${profile.rank.label} · ${profile.wins} V · ${profile.played} M`);
+				button.append(details);
+				addText(button, "strong", "leaderboard-rating", String(profile.rating));
+				button.addEventListener("click", () => selectLeaderboardPlayer(profile.id, button));
+				item.append(button);
+				leaderboardList.append(item);
+				if (index === 0) selectedButton = button;
+			});
+			if (selectedButton) selectLeaderboardPlayer(players[0].id, selectedButton);
+		} catch (error) {
+			leaderboardStatus.textContent = error.message || "Impossible de charger le classement.";
+		}
 	}
 
 	function setStatus(message, state = "") {
@@ -221,6 +343,7 @@
 	}
 
 	document.querySelector('[data-menu-tab="online"]').addEventListener("click", connect);
+	document.querySelector('[data-menu-tab="leaderboard"]').addEventListener("click", loadLeaderboard);
 	fields.register.addEventListener("click", () => authenticate("register"));
 	fields.login.addEventListener("click", () => authenticate("login"));
 	fields.queue.addEventListener("click", joinQueue);

@@ -258,6 +258,9 @@
   let localDuelMode = false;
   let onlineMatch = null;
   let onlineSide = null;
+  let previousOnlineState = null;
+  let currentOnlineState = null;
+  let onlineStateReceivedAt = 0;
   let lastNetworkInputAt = 0;
   let matchLength = 90;
   let remaining = matchLength;
@@ -1328,13 +1331,9 @@
   }
 
   function applyOnlineState(state) {
-    const applyBodyState = (body, value) => {
-      Body.setPosition(body, { x: value.x, y: value.y });
-      Body.setVelocity(body, { x: value.vx, y: value.vy });
-    };
-    applyBodyState(ball, state.ball);
-    applyBodyState(human, state.home);
-    applyBodyState(rival, state.away);
+    previousOnlineState = currentOnlineState || state;
+    currentOnlineState = state;
+    onlineStateReceivedAt = performance.now();
     homeGoals = state.homeGoals;
     awayGoals = state.awayGoals;
     stamina = onlineSide === "away" ? state.awayStamina : state.homeStamina;
@@ -1343,6 +1342,20 @@
     ui.homeScore.textContent = String(homeGoals);
     ui.awayScore.textContent = String(awayGoals);
     ui.clock.textContent = formatClock(remaining);
+  }
+
+  function applyInterpolatedBodyState(body, from, to, progress) {
+    Body.setPosition(body, { x: from.x + (to.x - from.x) * progress, y: from.y + (to.y - from.y) * progress });
+    Body.setVelocity(body, { x: from.vx + (to.vx - from.vx) * progress, y: from.vy + (to.vy - from.vy) * progress });
+  }
+
+  function renderOnlineState(timestamp) {
+    if (!onlineMatch || !currentOnlineState) return;
+    const from = previousOnlineState || currentOnlineState;
+    const progress = Math.max(0, Math.min(1, (timestamp - onlineStateReceivedAt) / 50));
+    applyInterpolatedBodyState(ball, from.ball, currentOnlineState.ball, progress);
+    applyInterpolatedBodyState(human, from.home, currentOnlineState.home, progress);
+    applyInterpolatedBodyState(rival, from.away, currentOnlineState.away, progress);
   }
 
   function showMatchResult() {
@@ -2863,6 +2876,7 @@
       lastNetworkInputAt = timestamp;
       window.onlinePlay?.sendInput(readOnlineInput());
     }
+    renderOnlineState(timestamp);
     updateRunTrail();
     draw();
     requestAnimationFrame(frame);
@@ -2948,15 +2962,17 @@
     button.addEventListener("click", () => {
       const showControls = button.dataset.menuTab === "controls";
       const showOnline = button.dataset.menuTab === "online";
+      const showLeaderboard = button.dataset.menuTab === "leaderboard";
       document.querySelectorAll("[data-menu-tab]").forEach((tab) => {
         const selected = tab === button;
         tab.classList.toggle("is-selected", selected);
         tab.setAttribute("aria-pressed", String(selected));
       });
-      document.querySelector("#menu-match-panel").hidden = showControls || showOnline;
+      document.querySelector("#menu-match-panel").hidden = showControls || showOnline || showLeaderboard;
       document.querySelector("#menu-controls-panel").hidden = !showControls;
       document.querySelector("#menu-online-panel").hidden = !showOnline;
-      document.querySelector("#menu-tab-label").textContent = showOnline ? "EN LIGNE" : showControls ? "TOUCHES" : "MATCH";
+      document.querySelector("#menu-leaderboard-panel").hidden = !showLeaderboard;
+      document.querySelector("#menu-tab-label").textContent = showLeaderboard ? "CLASSEMENT" : showOnline ? "EN LIGNE" : showControls ? "TOUCHES" : "MATCH";
     });
   });
   document.querySelectorAll("[data-bind-action]").forEach((button) => {
@@ -3016,6 +3032,8 @@
   document.addEventListener("online:matchFound", ({ detail }) => {
     onlineMatch = detail;
     onlineSide = detail.side;
+    previousOnlineState = null;
+    currentOnlineState = null;
     trainingMode = false;
     localDuelMode = false;
     matchLength = 90;
@@ -3067,6 +3085,8 @@
   document.addEventListener("online:opponentDisconnected", () => {
     onlineMatch = null;
     onlineSide = null;
+    previousOnlineState = null;
+    currentOnlineState = null;
     document.querySelector("#pause-button").disabled = false;
     ui.forfeitButton.hidden = true;
     ui.afkWarning.hidden = true;
